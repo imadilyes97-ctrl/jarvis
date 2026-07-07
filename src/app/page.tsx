@@ -184,19 +184,24 @@ function ChatPanel() {
     setLoading(true)
 
     try {
+      // Build history for CCR context (last 20 messages)
+      const history = messages.slice(-20).map((m) => ({
+        role: m.role,
+        text: m.text,
+      }))
+
       const res = await fetch(`${API}/message`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: input + (files.length > 0 ? ` [${files.map(f => f.name).join(', ')}]` : ''),
+          history,
         }),
       })
       const data = await res.json()
       setMessages((prev) => [...prev, {
         role: 'jarvis',
-        text: data.response || files.length > 0
-          ? `J'ai reçu ${files.length} fichier(s) ! ${input ? `\n\nMessage : "${input}"` : ''}\n\nJe peux analyser des images et traiter les infos. Donne-moi un instant.`
-          : 'Message reçu !',
+        text: data.response || 'Message reçu !',
         timestamp: Date.now(),
       }])
     } catch {
@@ -204,7 +209,7 @@ function ChatPanel() {
     }
     setFiles([])
     setLoading(false)
-  }, [input, files])
+  }, [input, files, messages])
 
   return (
     <div className="flex h-screen flex-col">
